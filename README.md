@@ -4,34 +4,31 @@
 
 **Latar Belakang Proyek**
 
-Proyek ini bertujuan untuk membangun sistem rekomendasi ponsel pintar menggunakan data rating dan spesifikasi ponser dari berbagai model ponsel. Sistem rekomendasi sangat penting dalam membantu pengguna membuat keputusan yang lebih baik dalam memilih ponsel yang sesuai dengan kebutuhan dan preferensi mereka.
+Seiring dengan perkembangan teknologi, pasar ponsel pintar semakin berkembang pesat dengan banyaknya pilihan model yang tersedia. Pengguna seringkali mengalami kesulitan dalam memilih ponsel yang tepat karena banyaknya pilihan yang ada. Selain itu, spesifikasi teknis yang kompleks dan beragam membuat proses pemilihan ponsel menjadi semakin sulit bagi konsumen awam. Hal ini menimbulkan masalah bagi pengguna yang ingin mendapatkan ponsel yang sesuai dengan kebutuhan mereka tanpa harus melalui proses penelitian yang memakan waktu.
+
+Sistem rekomendasi adalah alat untuk berinteraksi dengan ruang informasi yang besar dan kompleks[1]. Oleh karena itu, penting untuk memiliki sistem rekomendasi yang dapat menyederhanakan proses ini dengan memberikan rekomendasi yang relevan berdasarkan kebutuhan dan preferensi pengguna. Dengan memanfaatkan data rating pengguna sebelumnya dan spesifikasi teknis ponsel, sistem rekomendasi ini diharapkan dapat membantu pengguna menemukan ponsel yang paling sesuai dengan kebutuhan mereka, baik dari segi performa, harga, maupun fitur lainnya.
 
 **Pentingnya Proyek**
 
 Proyek ini penting karena: 
 - Peningkatan Pengalaman Pengguna: Membantu pengguna menemukan ponsel yang sesuai dengan preferensi mereka, meningkatkan kepuasan dan pengalaman pengguna.
 - Efisiensi: Mengurangi waktu dan usaha yang dibutuhkan pengguna dalam mencari dan membandingkan berbagai model ponsel.
-- Personalisasi: Memberikan rekomendasi yang dipersonalisasi berdasarkan data historis (rating yang diberikan pengguna kepada ponsel) dan preferensi pengguna.
-
-**Referensi Terkait**  
-
-- [Evaluating Recommender Systems: Survey and Framework](https://dl.acm.org/doi/full/10.1145/3556536)
-- [Recommender systems and their impact on sales diversity](https://dl.acm.org/doi/abs/10.1145/1250910.1250939) 
+- Personalisasi: Memberikan rekomendasi yang dipersonalisasi berdasarkan data rating pengguna.
 
 ## Business Understanding
 
 ### Problem Statements
 - Bagaimana kita bisa membantu pengguna menemukan ponsel yang paling sesuai dengan kebutuhan dan preferensi mereka?
-- Bagaimana kita dapat mengintegrasikan fitur-fitur ponsel untuk memberikan rekomendasi yang lebih akurat dan relevan?
+- Bagaimana kita bisa membantu pengguna menemukan ponsel yang mirip dengan ponsel lamanya meskipun pengguna tidak mengerti spesifikasi teknis ponsel lamanya?
 
 ### Goals
 Menjelaskan tujuan proyek yang menjawab pernyataan masalah:
 - Mengembangkan sistem rekomendasi yang dapat memberikan daftar ponsel terbaik berdasarkan preferensi pengguna (Rating terhadap ponsel lama nya).
-- Menggunakan data deskriptif (model ponsel) untuk meningkatkan akurasi dan relevansi rekomendasi.
+- Membangun sistem rekomendasi yang dapat memberikan daftar ponsel terbaik berdasarkan model ponsel lamanya (Contoh: iPhone XR).
 
 ### Solution statements
-- Content-Based Filtering: Menggunakan fitur deskriptif dari ponsel (brand, model, dan operating system) untuk memberikan rekomendasi berdasarkan kesamaan fitur.
-- Collaborative Filtering: Menggunakan data historis dari pengguna untuk memberikan rekomendasi berdasarkan kesamaan preferensi dengan pengguna lain.
+- Content-Based Filtering: Menggunakan fitur deskriptif dari ponsel (brand, model, dan operating system) untuk memberikan rekomendasi.
+- Collaborative Filtering: Menggunakan data rating dari pengguna untuk memberikan rekomendasi berdasarkan kesamaan preferensi dengan pengguna lain.
 
 ## Data Understanding
 Dataset yang digunakan berisi informasi mengenai berbagai model ponsel, termasuk brand, model, operating system, dan beberapa fitur lainnya. Dataset ini dapat diunduh dari [kaggle](https://www.kaggle.com/datasets/meirnizri/cellphones-recommendations/data).
@@ -179,30 +176,51 @@ Pada tahap ini akan membahas dua pendekatan utama yang digunakan dalam membangun
 
 **Model Sistem Rekomendasi Content Based Filtering**
 
-Content-Based Filtering menggunakan deskripsi dan fitur dari item itu sendiri untuk memberikan rekomendasi. Berikut adalah parameter dan contoh kode untuk pendekatan ini.
+Content-Based Filtering menggunakan deskripsi dan fitur dari item itu sendiri untuk memberikan rekomendasi. Berikut adalah parameter untuk pendekatan ini.
 
 Parameter yang Digunakan:
-
   - TF-IDF Vectorizer: Untuk mengubah deskripsi teks menjadi vektor numerik.
   - Cosine Similarity: Untuk menghitung kesamaan antara vektor item.
 
-Contoh kode:
-```python
-def model_recommendations(model, similarity_data=cosine_sim_df, items=phone_new[['model','brand','operating_system']], k=4):
-    #Mengambil data dengan menggunakan argpartition untuk melakukan partisi secara tidak langsung sepanjang sumbu yang diberikan    
-    #Dataframe diubah menjadi numpy
-    #Range(start, stop, step)
-    index = similarity_data.loc[:,model].to_numpy().argpartition(
-        range(-1, -k, -1))
-    
-    #Mengambil data dengan similarity terbesar dari index yang ada
-    closest = similarity_data.columns[index[-1:-(k+2):-1]]
-    
-    # Drop nama_model agar nama model yang dicari tidak muncul dalam daftar rekomendasi
-    closest = closest.drop(model, errors='ignore')
- 
-    return pd.DataFrame(closest).merge(items).head(k)
-```
+Tahapan proses:
+
+- Karena TF-IDF hanya cocok untuk data teks maka hanya kolom yang bertipe object saja yang dipilih.
+  ```python
+  #Menyiapkan dataframe
+  phone_new = pd.DataFrame({
+      'cellphone_id': cellphone_id,
+      'brand': brand,
+      'model': model,
+      'operating_system': operating_system,
+  })
+  ```
+
+- Membangun sistem rekomendasi menggunakan TfidfVectorizer()
+  ```python
+  #Inisialisasi TfidfVectorizer
+  tf = TfidfVectorizer()
+  
+  #Melakukan perhitungan idf pada data brand
+  tf.fit(data['brand']) 
+
+  #Melakukan fit lalu ditransformasikan ke bentuk matrix
+  tfidf_matrix = tf.fit_transform(data['brand']) 
+  ```
+
+- Menghitung derajat kesamaan (similarity degree)
+  ```python
+  #Menghitung cosine_similatiry
+  cosine_sim = cosine_similarity(tfidf_matrix)
+
+  #Membuat dataframe dari variabel cosine_sim
+  cosine_sim_df = pd.DataFrame(cosine_sim, index=data['model'], columns=data['model'])
+  ```
+
+- Membangun fungsi model_recommendations 
+  ```python
+  #Code lengkap pada .ipynb
+  def model_recommendations(model, similarity_data=cosine_sim_df, items=phone_new[['model','brand','operating_system']], k=4):
+  ```
 
 **Top-N Recommendation Content Based Filtering**
 
@@ -226,7 +244,7 @@ Menampilkan hasil rekomendasi
   |3|Galaxy A13|Samsung|Android|
 
 **Model Sistem Rekomendasi Collaborative Filtering (Alternatif)**
-Collaborative Filtering menggunakan interaksi pengguna-item (misalnya, rating) untuk memberikan rekomendasi. Berikut adalah parameter dan contoh kode untuk pendekatan ini.
+Collaborative Filtering menggunakan interaksi pengguna-item (rating) untuk memberikan rekomendasi. Berikut adalah parameter untuk pendekatan ini.
 
 Parameter yang Digunakan:
   - loss = BinaryCrossentropy
@@ -234,64 +252,48 @@ Parameter yang Digunakan:
   - learning_rate = 0.001
   - metrics = RootMeanSquaredError
 
-Contoh kode:
-- Membuat variabel cellhpone_not_reviewed sebagai daftar cellphone untuk direkomendasikan pada pengguna.
-```python
-phone_df = phone_new
-df = pd.read_csv('rating.csv')
+Tahapan proses:
+- Menyiapkan dataframe
+  ```python
+  #Membaca dataset
+  df = rating
+  ```
 
-#Mengambil sample user
-user_id = df.user_id.sample(1).iloc[0]
-cellphone_reviewed_by_user = df[df.user_id == user_id]
+- Membersihkan dataset seperti drop missing value dan handle outliers.
 
-cellphone_not_reviewed = phone_df[~phone_df['cellphone_id'].isin(cellphone_reviewed_by_user.cellphone_id.values)]['cellphone_id']
-cellphone_not_reviewed = list(
-    set(cellphone_not_reviewed)
-    .intersection(set(cellphone_to_cellphone_encoded.keys()))
-)
+- Melakukan acak terhadap dataset.
+  ```python
+  #Mengacak dataset
+  df = df.sample(frac=1, random_state=42)
+  ```
 
-cellphone_not_reviewed = [[cellphone_to_cellphone_encoded.get(x)] for x in cellphone_not_reviewed]
-user_encoder = user_to_user_encoded.get(user_id)
-user_cellphone_array = np.hstack(
-    ([[user_encoder]] * len(cellphone_not_reviewed), cellphone_not_reviewed)
-)
-```
-- Meperoleh hasil rekomendasi cellphone.
-```python
-ratings = model.predict(user_cellphone_array).flatten()
+- Membagi data train-test (80:20)
 
-top_ratings_indices = ratings.argsort()[-10:][::-1]
-recommended_cellphone_ids = [
-    cellphone_encoded_to_cellphone.get(cellphone_not_reviewed[x][0]) for x in top_ratings_indices
-]
+- Membuat class RecommenderNet
 
-print('Showing recommendations for users: {}'.format(user_id))
-print('===' * 9)
-print('cellphone with high ratings from user')
-print('----' * 8)
+- Inisialisasi dan compile model
+  ```python
+  #inisialisasi model
+  model = RecommenderNet(num_users, num_cellphone, 50) 
 
-top_cellphone_user = (
-    cellphone_reviewed_by_user.sort_values(
-        by = 'rating',
-        ascending=False
-    )
-    .head(5)
-    .cellphone_id.values
-)
-
-cellphone_df_rows = phone_df[phone_df['cellphone_id'].isin(top_cellphone_user)]
-for row in cellphone_df_rows.itertuples():
-    print(row.brand, ':', row.model)
-
-print('----' * 8)
-print('Top 10 cellphone recommendation')
-print('----' * 8)
-
-recommended_cellphone = phone_df[phone_df['cellphone_id'].isin(recommended_cellphone_ids)]
-for row in recommended_cellphone.itertuples():
-    print(row.brand, ':', row.model)
-```
-
+  #model compile
+  model.compile(
+      loss = tf.keras.losses.BinaryCrossentropy(),
+      optimizer = keras.optimizers.Adam(learning_rate=0.001),
+      metrics=[tf.keras.metrics.RootMeanSquaredError()]
+  )
+  ```
+- Training model
+  ```python
+  #Memulai training
+  history = model.fit(
+      x = x_train,
+      y = y_train,
+      batch_size = 8,
+      epochs = 100,
+      validation_data = (x_val, y_val)
+  )
+  ```
 **Top-N Recommendation Collaborative Filtering (Alternatif)**
 ```
 Showing recommendations for users: 237
@@ -336,6 +338,8 @@ Apple : iPhone 13 Pro Max
   - Kekurangan:
     - Cold Start Problem: Kesulitan merekomendasikan item baru atau kepada pengguna baru yang belum memiliki cukup interaksi.
 
+*Untuk tahapan proses yang lebih lengkap silahkan baca [Dicoding_ModelSistemRekomendasi.ipynb](https://github.com/AbiyaMakruf/Dicoding-ModelSistemRekomendasi/blob/main/Dicoding_ModelSistemRekomendasi.ipynb)*
+
 ## Evaluation
 Pada bagian ini, akan mengevaluasi model rekomendasi yang telah dibangun menggunakan metrik evaluasi yang tepat. Untuk model prediksi rating, kita akan menggunakan Root Mean Squared Error (RMSE) sebagai metrik evaluasi. Selain itu, akan mengevaluasi apakah proyek ini berhasil menjawab problem statement dan memberikan solusi yang diinginkan.
 
@@ -367,9 +371,15 @@ Di mana:
 RMSE yang dihitung memberikan indikasi bahwa model prediksi rating memiliki tingkat kesalahan yang dapat diterima, sehingga memadai untuk tujuan rekomendasi.
 
 **Evaluasi Terhadap Business Understanding**
-- Menjawab Problem Statement: Model yang dibuat berhasil menjawab problem statement dengan memberikan rekomendasi ponsel berdasarkan fitur-fitur deskriptif yang ada dan memprediksi rating ponsel yang belum diulas oleh pengguna.
-- Mencapai Goals: Model content-based filtering dengan cosine similarity dan collaborative filtering berhasil mencapai tujuan untuk memberikan rekomendasi ponsel yang relevan dan memprediksi rating dengan akurasi yang memadai.
-- Dampak dari Solution Statement: Penggunaan beberapa pendekatan algoritma (content-based dan collaborative filtering) dan teknik evaluasi seperti RMSE memberikan dampak positif dengan meningkatkan relevansi dan akurasi rekomendasi. Solusi yang direncanakan memberikan hasil yang signifikan dalam mencapai tujuan proyek.
+- Menjawab Problem Statement: Model yang dibuat berhasil menjawab problem statement dengan memberikan rekomendasi ponsel berdasarkan model yang ada dan memprediksi rating ponsel yang belum diulas oleh pengguna. Pendekatan content-based filtering menggunakan model ponsel untuk memberikan rekomendasi yang relevan berdasarkan kesamaan model, brand, dan operating system, sementara collaborative filtering memanfaatkan interaksi pengguna-item (rating) untuk menemukan pola preferensi pengguna.
+
+- Mencapai Goals: Model content-based filtering dengan cosine similarity dan collaborative filtering dengan RecommenderNet berhasil mencapai tujuan untuk memberikan rekomendasi ponsel yang relevan. Content-based filtering menggunakan data deskriptif yaitu model ponsel untuk membuat profil item, sehingga meningkatkan akurasi rekomendasi dengan memperhitungkan kesamaan fitur (model, brand, operating system). Di sisi lain, collaborative filtering memanfaatkan data rating dari pengguna untuk menemukan pola preferensi dan merekomendasikan ponsel yang sesuai dengan kesukaan pengguna.
+
+- Dampak dari Solution Statement: Penggunaan beberapa pendekatan algoritma (content-based dan collaborative filtering) dan teknik evaluasi seperti RMSE memberikan dampak positif dengan meningkatkan relevansi dan akurasi rekomendasi. Content-based filtering memastikan bahwa model ponsel yang diberikan dapat memberikan rekomendasi yang relevan dengan ponsel lamanya karena mempertimbangkan kesamaan fitur (model, brand, operating system) bagi pengguna. Sementara itu, collaborative filtering memungkinkan sistem untuk memahami preferensi pengguna berdasarkan interaksi sebelumnya, memberikan rekomendasi yang dipersonalisasi. Solusi yang direncanakan memberikan hasil yang signifikan dalam mencapai tujuan proyek, memastikan bahwa rekomendasi yang diberikan sesuai dengan kebutuhan dan preferensi pengguna.
 
 ## Kesimpulan
 Dengan menggunakan kedua pendekatan ini, kita dapat membangun sistem rekomendasi yang lebih robust dan fleksibel. Content-Based Filtering cocok untuk memberikan rekomendasi berdasarkan fitur-fitur item itu sendiri, sementara Collaborative Filtering efektif dalam menemukan pola-pola preferensi pengguna dari data interaksi yang ada. Memahami kelebihan dan kekurangan masing-masing pendekatan membantu kita memilih metode yang paling sesuai dengan kebutuhan dan konteks spesifik dari sistem rekomendasi yang sedang dibangun.
+
+## Referensi
+
+[1] [R. Burke, A. Felfernig, and M. H. Göker, “Recommender Systems: An Overview”, AIMag, vol. 32, no. 3, pp. 13-18, Jun. 2011.](https://ojs.aaai.org/aimagazine/index.php/aimagazine/article/view/2361) 
