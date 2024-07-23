@@ -186,7 +186,7 @@ Tahapan proses:
 
 - Karena TF-IDF hanya cocok untuk data teks maka hanya kolom yang bertipe object saja yang dipilih.
   ```python
-  #Menyiapkan dataframe
+  #Dataframe yang digunakan
   phone_new = pd.DataFrame({
       'cellphone_id': cellphone_id,
       'brand': brand,
@@ -195,32 +195,28 @@ Tahapan proses:
   })
   ```
 
-- Membangun sistem rekomendasi menggunakan TfidfVectorizer()
-  ```python
-  #Inisialisasi TfidfVectorizer
-  tf = TfidfVectorizer()
-  
-  #Melakukan perhitungan idf pada data brand
-  tf.fit(data['brand']) 
+- Membangun sistem rekomendasi menggunakan TfidfVectorizer() dengan melakukan perhitungan idf pada data `brand`
 
+- Melakukan fit lalu ditransformasikan ke bentuk matrix
+  ```python
   #Melakukan fit lalu ditransformasikan ke bentuk matrix
   tfidf_matrix = tf.fit_transform(data['brand']) 
   ```
+  Terdapat keluaran (33,10) dimana nilai 33 adalah ukuran data dan 10 jumlah brand.
 
-- Menghitung derajat kesamaan (similarity degree)
-  ```python
-  #Menghitung cosine_similatiry
-  cosine_sim = cosine_similarity(tfidf_matrix)
+- Menghitung derajat kesamaan (similarity degree) antar model dengan teknik cosine similarity.
 
-  #Membuat dataframe dari variabel cosine_sim
-  cosine_sim_df = pd.DataFrame(cosine_sim, index=data['model'], columns=data['model'])
-  ```
+- Membangun fungsi yang menerima nama model dan menampilkan 4 rekomendasi teratas. Output berupa rekomendasi model dengan tambahan detail seperti brand dan operating system.
 
-- Membangun fungsi model_recommendations 
-  ```python
-  #Code lengkap pada .ipynb
-  def model_recommendations(model, similarity_data=cosine_sim_df, items=phone_new[['model','brand','operating_system']], k=4):
-  ```
+Bagaimana Algoritma Bekerja:
+- Content-Based Filtering menggunakan model dari item itu sendiri untuk memberikan rekomendasi. Algoritma ini bekerja dengan cara mengubah fitur deskriptif item (model) menjadi representasi numerik menggunakan TF-IDF Vectorizer. Kemudian, cosine similarity dihitung untuk menentukan seberapa mirip item-item tersebut berdasarkan vektor fitur mereka. Berdasarkan kemiripan ini, sistem dapat merekomendasikan item yang paling mirip dengan item yang sudah disukai pengguna.
+
+Interaksi dengan Sampel Input:
+Misalkan pengguna memiliki ponsel "iPhone XR" dan ingin mendapatkan rekomendasi ponsel yang mirip. Algoritma akan:
+  1. Mengambil deskripsi lengkap dari "iPhone XR".
+  2. Mengubah deskripsi ini menjadi vektor numerik menggunakan TF-IDF Vectorizer.
+  3. Menghitung cosine similarity antara vektor "iPhone XR" dan semua vektor ponsel lain dalam dataset.
+  4. Mengembalikan daftar ponsel dengan similarity tertinggi ke "iPhone XR".
 
 **Top-N Recommendation Content Based Filtering**
 
@@ -244,6 +240,7 @@ Menampilkan hasil rekomendasi
   |3|Galaxy A13|Samsung|Android|
 
 **Model Sistem Rekomendasi Collaborative Filtering (Alternatif)**
+
 Collaborative Filtering menggunakan interaksi pengguna-item (rating) untuk memberikan rekomendasi. Berikut adalah parameter untuk pendekatan ini.
 
 Parameter yang Digunakan:
@@ -253,47 +250,32 @@ Parameter yang Digunakan:
   - metrics = RootMeanSquaredError
 
 Tahapan proses:
-- Menyiapkan dataframe
-  ```python
-  #Membaca dataset
-  df = rating
-  ```
+- Menggunakan dataframe rating (cellphones rating.csv)
+- Membuat class RecommenderNet dengan keras Model class
+```python
+class RecommenderNet(tf.keras.Model):
+  ...
+  ...
+```
+- Inisialisasi model menggunakan RecommenderNet dengan nilai embedding 50
+- Compile model menggunakan
+  - loss = BinaryCrossentropy
+  - optimizer = Adam
+  - learning_rate = 0.001
+  - metrics = RootMeanSquaredError
+- Melakukan training model menggunakan 
+  - batch_size = 8
+  - epochs = 100
 
-- Membersihkan dataset seperti drop missing value dan handle outliers.
+Bagaimana Algoritma Bekerja:
+- Collaborative Filtering menggunakan interaksi pengguna-item (rating) untuk memberikan rekomendasi. Algoritma ini bekerja dengan cara memprediksi rating item yang belum diulas pengguna berdasarkan rating item yang mirip oleh pengguna lain. Model ini mempelajari pola preferensi pengguna dari data rating yang ada dan menggunakan pola tersebut untuk merekomendasikan item yang mungkin disukai pengguna.
 
-- Melakukan acak terhadap dataset.
-  ```python
-  #Mengacak dataset
-  df = df.sample(frac=1, random_state=42)
-  ```
+Interaksi dengan Sampel Input:
+Misalkan pengguna dengan ID 237 memiliki beberapa ponsel dengan rating tinggi dan ingin mendapatkan rekomendasi. Algoritma akan:
+1. Mengambil data rating dari pengguna lain yang memiliki preferensi serupa.
+2. Menggunakan model yang dilatih untuk memprediksi rating ponsel yang belum diulas oleh pengguna 237.
+3. Mengembalikan daftar ponsel dengan prediksi rating tertinggi.
 
-- Membagi data train-test (80:20)
-
-- Membuat class RecommenderNet
-
-- Inisialisasi dan compile model
-  ```python
-  #inisialisasi model
-  model = RecommenderNet(num_users, num_cellphone, 50) 
-
-  #model compile
-  model.compile(
-      loss = tf.keras.losses.BinaryCrossentropy(),
-      optimizer = keras.optimizers.Adam(learning_rate=0.001),
-      metrics=[tf.keras.metrics.RootMeanSquaredError()]
-  )
-  ```
-- Training model
-  ```python
-  #Memulai training
-  history = model.fit(
-      x = x_train,
-      y = y_train,
-      batch_size = 8,
-      epochs = 100,
-      validation_data = (x_val, y_val)
-  )
-  ```
 **Top-N Recommendation Collaborative Filtering (Alternatif)**
 ```
 Showing recommendations for users: 237
