@@ -1,5 +1,10 @@
 # Laporan Proyek Machine Learning - Muhammad Abiya Makruf
 
+## Penilaian Proyek
+Proyek ini berhasil mendapatkan bintang 5/5 pada submission dicoding course machine learning terapan.
+  ![Nilai submission](https://raw.githubusercontent.com/AbiyaMakruf/Dicoding-ModelSistemRekomendasi/main/image/image7.png)
+
+
 ## Project Overview
 
 **Latar Belakang Proyek**
