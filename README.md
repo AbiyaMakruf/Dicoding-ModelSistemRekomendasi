@@ -2,7 +2,7 @@
 
 ## Penilaian Proyek
 Proyek ini berhasil mendapatkan bintang 5/5 pada submission dicoding course machine learning terapan.
-  ![Nilai submission](https://raw.githubusercontent.com/AbiyaMakruf/Dicoding-ModelSistemRekomendasi/main/image/image7.png)
+<img src="https://raw.githubusercontent.com/AbiyaMakruf/Dicoding-ModelSistemRekomendasi/main/image/image7.png" width="500">
 
 
 ## Project Overview
